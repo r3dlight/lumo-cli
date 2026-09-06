@@ -40,13 +40,31 @@ commands, with the same end-to-end encryption as the official web client.
 
 ## Installation
 
+Prebuilt, statically linked binaries (x86_64 and aarch64, musl) are published by the release
+workflow. The installer downloads the latest one, checks its SHA-256 against the release's
+`SHA256SUMS`, and places it in `~/.local/bin`:
+
 ```sh
-cargo build --release   # stable Rust 1.88 or newer (rust-toolchain.toml selects stable)
-# binary: target/release/lumo-cli (symlink it, e.g. to ~/.local/bin/lumo)
+curl -fsSL https://raw.githubusercontent.com/r3dlight/lumo-cli/main/install.sh | sh
 ```
 
-The sandbox needs a Linux kernel with Landlock (5.13 or newer; 6.12 for the whole policy) and no
-external binary. It is optional: the tool runs without it.
+`LUMO_INSTALL_DIR` changes the destination, `LUMO_VERSION` selects a tag and `LUMO_BASE_URL` points
+at a mirror. Without the script, the same archive can be unpacked directly:
+
+```sh
+curl -fsSL https://github.com/r3dlight/lumo-cli/releases/latest/download/lumo-cli-x86_64-unknown-linux-musl.tar.gz | tar -xz -C ~/.local/bin
+```
+
+From source, with stable Rust 1.88 or newer (`rust-toolchain.toml` selects it) and a C compiler
+for the TLS backend (`aws-lc-sys`):
+
+```sh
+cargo install --git https://github.com/r3dlight/lumo-cli --locked   # or: cargo build --release
+```
+
+At runtime the binary needs nothing beyond the kernel: `git` for `/commit`, and `rg` (falling back
+to `grep`) for `search`, are optional. The sandbox needs Landlock (Linux 5.13 or newer; 6.12 for
+the whole policy) and is optional as well.
 
 ## Usage
 

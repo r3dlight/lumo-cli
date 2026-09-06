@@ -1,0 +1,77 @@
+# On a version tag (v1.2.3), build static binaries for x86_64 and aarch64,
+# publish them with a SHA256SUMS file as a GitHub release. Both targets are
+# built natively (GitHub provides arm64 runners), against musl so that the
+# binary has no dependency on the host's glibc.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            runner: ubuntu-24.04
+          - target: aarch64-unknown-linux-musl
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain and musl target
+        run: |
+          rustup show active-toolchain
+          rustup target add ${{ matrix.target }}
+          sudo apt-get update && sudo apt-get install -y musl-tools
+      - name: Build
+        run: cargo build --release --locked --target ${{ matrix.target }}
+        env:
+          # aws-lc-sys (reqwest's TLS backend) compiles C; point cc-rs at the
+          # musl wrapper from musl-tools for the cross target.
+          CC: musl-gcc
+          TARGET_CC: musl-gcc
+      - name: Package
+        run: |
+          set -eu
+          asset="lumo-cli-${{ matrix.target }}.tar.gz"
+          tar -C "target/${{ matrix.target }}/release" -czf "$asset" lumo-cli
+          sha256sum "$asset" > "$asset.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: |
+            lumo-cli-${{ matrix.target }}.tar.gz
+            lumo-cli-${{ matrix.target }}.tar.gz.sha256
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        run: |
+          set -eu
+          cd dist
+          cat ./*.sha256 > SHA256SUMS
+          rm ./*.sha256
+          sha256sum -c SHA256SUMS
+      - name: Release
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "lumo-cli $GITHUB_REF_NAME" \
+            --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
