@@ -55,3 +55,7 @@ mem_forget = "deny"
 # braces over the checked arithmetic above); negligible cost for a CLI.
 [profile.release]
 overflow-checks = true
+# Smaller release binaries: symbols stripped, thin LTO, one codegen unit.
+strip = true
+lto = "thin"
+codegen-units = 1
