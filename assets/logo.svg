@@ -1,0 +1,51 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="lumo-cli logo: a cute terminal cat">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7C3AED"/>
+      <stop offset="1" stop-color="#C026D3"/>
+    </linearGradient>
+    <linearGradient id="ear" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#FBCFE8"/>
+      <stop offset="1" stop-color="#F9A8D4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- rounded app-icon background -->
+  <rect x="0" y="0" width="256" height="256" rx="58" fill="url(#bg)"/>
+  <rect x="3" y="3" width="250" height="250" rx="55" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="2"/>
+
+  <!-- ears -->
+  <path d="M74 118 L64 56 L120 92 Z" fill="#FFFFFF"/>
+  <path d="M182 118 L192 56 L136 92 Z" fill="#FFFFFF"/>
+  <path d="M82 108 L77 74 L108 94 Z" fill="url(#ear)"/>
+  <path d="M174 108 L179 74 L148 94 Z" fill="url(#ear)"/>
+
+  <!-- head -->
+  <circle cx="128" cy="150" r="66" fill="#FFFFFF"/>
+
+  <!-- eyes (=^.^=) with cute highlights -->
+  <ellipse cx="104" cy="146" rx="11" ry="15" fill="#2E1065"/>
+  <ellipse cx="152" cy="146" rx="11" ry="15" fill="#2E1065"/>
+  <circle cx="108" cy="140" r="3.4" fill="#FFFFFF"/>
+  <circle cx="156" cy="140" r="3.4" fill="#FFFFFF"/>
+
+  <!-- nose + soft smile -->
+  <path d="M122 168 L134 168 L128 176 Z" fill="#F472B6"/>
+  <path d="M128 176 C122 184 112 184 108 178" stroke="#9D174D" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  <path d="M128 176 C134 184 144 184 148 178" stroke="#9D174D" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+
+  <!-- whiskers -->
+  <g stroke="#C4B5FD" stroke-width="3.2" stroke-linecap="round">
+    <path d="M78 150 H44"/>
+    <path d="M80 164 L48 172"/>
+    <path d="M178 150 H212"/>
+    <path d="M176 164 L208 172"/>
+  </g>
+
+  <!-- terminal prompt chip: signals the CLI -->
+  <g transform="translate(150 186)">
+    <rect x="0" y="0" width="66" height="34" rx="9" fill="#1E1B2E"/>
+    <path d="M12 11 L20 17 L12 23" stroke="#34D399" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <rect x="30" y="10" width="16" height="14" rx="2" fill="#34D399"/>
+  </g>
+</svg>

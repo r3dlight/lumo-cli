@@ -1,0 +1,4 @@
+# ANSSI DENV-RUSTUP-TOOLCHAIN: build with the stable toolchain only.
+[toolchain]
+channel = "stable"
+components = ["clippy", "rustfmt"]

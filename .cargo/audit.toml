@@ -1,0 +1,13 @@
+# cargo-audit configuration.
+#
+# RUSTSEC-2023-0071 (Marvin Attack, `rsa` 0.9.x): a timing side-channel in RSA
+# PKCS#1 v1.5 DECRYPTION. It is pulled in transitively by `pgp` and
+# `proton-srp`, and has no fixed upstream release.
+#
+# It is not reachable in lumo-cli: we never perform RSA private-key decryption.
+# Lumo's key is EdDSA + Curve25519 (ECDH), so the request key is encrypted with
+# ECDH, not RSA; SRP uses modular exponentiation, not RSA decryption. We only
+# encrypt to a public key and verify signatures — neither exercises the
+# vulnerable path. Re-review if a dependency starts doing RSA decryption.
+[advisories]
+ignore = ["RUSTSEC-2023-0071"]
