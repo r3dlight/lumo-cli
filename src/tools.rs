@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! Local tools the agent can invoke: file inspection, edits, shell commands.
 
+use std::io::BufRead;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 
@@ -11,7 +12,8 @@ use serde_json::Value;
 use crate::sandbox::Sandbox;
 
 const MAX_TOOL_OUTPUT: usize = 12_000; // chars fed back to the model
-const MAX_READ_BYTES: u64 = 256 * 1024;
+// Upper bound on files scanned line by line; the window returned is much smaller.
+const MAX_READ_BYTES: u64 = 32 * 1024 * 1024;
 const SKIP_DIRS: &[&str] = &[
     ".git",
     "node_modules",
@@ -321,23 +323,25 @@ fn read_file(path: &Path, offset: usize, limit: usize) -> Result<String> {
         std::fs::metadata(path).map_err(|e| anyhow!("cannot access {}: {e}", path.display()))?;
     if meta.len() > MAX_READ_BYTES {
         bail!(
-            "{} is {} bytes, too large to read whole; use `offset`/`limit` or `search`",
+            "{} is {} bytes, too large to read; use `search`",
             path.display(),
             meta.len()
         );
     }
-    let content = std::fs::read_to_string(path)
-        .map_err(|e| anyhow!("cannot read {} as text: {e}", path.display()))?;
+    let file =
+        std::fs::File::open(path).map_err(|e| anyhow!("cannot read {}: {e}", path.display()))?;
     let offset = offset.max(1);
     let skip = offset.saturating_sub(1);
-    let numbered: Vec<String> = content
-        .lines()
-        .enumerate()
-        .skip(skip)
-        .take(limit)
-        .map(|(i, l)| format!("{:>5}| {}", i.saturating_add(1), l))
-        .collect();
-    let total = content.lines().count();
+    // Stream the lines and keep only the requested window.
+    let mut numbered: Vec<String> = Vec::new();
+    let mut total = 0usize;
+    for (i, line) in std::io::BufReader::new(file).lines().enumerate() {
+        let line = line.map_err(|e| anyhow!("cannot read {} as text: {e}", path.display()))?;
+        if i >= skip && numbered.len() < limit {
+            numbered.push(format!("{:>5}| {}", i.saturating_add(1), line));
+        }
+        total = total.saturating_add(1);
+    }
     let mut out = numbered.join("\n");
     let shown_up_to = skip.saturating_add(limit).min(total);
     if shown_up_to < total {
@@ -473,6 +477,19 @@ mod tests {
             let p = plan(&call(t, args), None).unwrap();
             assert!(matches!(p.approval, PendingAction::ReadOnly), "{t}");
         }
+    }
+
+    #[test]
+    fn read_file_window_works_on_files_above_old_size_cap() {
+        let dir = std::env::temp_dir().join(format!("lumo_read_{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let f = dir.join("big.txt");
+        let body: String = (1..=100_000).map(|i| format!("line {i}\n")).collect();
+        std::fs::write(&f, &body).unwrap();
+        let out = read_file(&f, 10, 3).unwrap();
+        assert!(out.starts_with("   10| line 10\n   11| line 11\n   12| line 12"));
+        assert!(out.contains("of 100000"));
+        std::fs::remove_dir_all(&dir).ok();
     }
 
     #[test]
