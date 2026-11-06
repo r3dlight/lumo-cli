@@ -559,6 +559,15 @@ impl LumoClient {
                     {
                         args = clear;
                     }
+                    // Progress echoes often arrive with empty (or undecryptable)
+                    // arguments before the real call streams in via
+                    // `delta.tool_calls`. Registering them produces phantom calls
+                    // with `{}` arguments that later fail validation with
+                    // "missing string argument …". Skip anything empty; the
+                    // delta channel (or a later echo) carries the real call.
+                    if args.trim().is_empty() {
+                        return Ok(());
+                    }
                     // A `chat.tool_call` may describe a CLIENT tool call with
                     // decrypted arguments; register it so it merges with the
                     // delta.tool_calls channel.
