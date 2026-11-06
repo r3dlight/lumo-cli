@@ -2,7 +2,7 @@
 name = "lumo-cli"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.94"
 license = "GPL-3.0-or-later"
 description = "Unofficial terminal coding agent for Proton Lumo (Claude Code style)"
 
@@ -16,7 +16,7 @@ dirs = "7.0.0"
 futures-util = "0.3.34"
 landlock = "0.4.7"
 owo-colors = "4.4.0"
-pgp = "0.20.0"
+pgp = "0.21.0"
 proton-srp = "0.8.2"
 rand = "0.8"
 reqwest = { version = "0.13.4", default-features = false, features = ["rustls", "json", "stream", "http2", "cookies"] }
