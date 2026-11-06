@@ -399,6 +399,8 @@ async fn handle_slash(
     match parts.next().unwrap_or("") {
         "help" => {
             println!("  /clear           reset conversation history");
+            println!("  /login           log in again (reconnect after a broken/expired session)");
+            println!("  /logout          delete the stored session (until /login)");
             println!("  /chat            toggle agent mode ↔ plain chat");
             println!(
                 "  /model [name]    show or set model (lumo-lite = default; lumo-max = premium/quota; apertus-15)"
@@ -463,6 +465,42 @@ async fn handle_slash(
             client.clear_history();
             println!("  history cleared");
         }
+        "login" => {
+            // Re-authenticate without leaving the REPL: the flow prompts for
+            // credentials on stdin (rpassword reads /dev/tty for passwords),
+            // saves the new session, then hot-swaps it into the live client.
+            match crate::login_flow(None).await {
+                Ok(()) => match crate::auth::Session::load() {
+                    Ok(Some(session)) => {
+                        client.session = Some(session);
+                        if let Some(s) = &client.session {
+                            println!(
+                                "  {} reconnected as {}",
+                                "✓".green().bold(),
+                                s.username.green()
+                            );
+                        }
+                    }
+                    Ok(None) => println!(
+                        "  {} login succeeded but no session was stored",
+                        "error:".red()
+                    ),
+                    Err(e) => println!("  {} could not reload session: {e:#}", "error:".red()),
+                },
+                Err(e) => println!("  {} {e:#}", "login failed:".red()),
+            }
+        }
+        "logout" => match crate::auth::Session::delete() {
+            Ok(true) => {
+                client.session = None;
+                println!(
+                    "  {} session deleted; run /login to reconnect",
+                    "logged out:".green()
+                );
+            }
+            Ok(false) => println!("  no stored session"),
+            Err(e) => println!("  {} {e:#}", "error:".red()),
+        },
         "chat" => {
             cfg.agent_mode = !cfg.agent_mode;
             client.clear_history(); // system prompt differs between modes

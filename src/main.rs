@@ -810,7 +810,9 @@ async fn one_shot(
     }
 }
 
-async fn login_flow(captcha_token: Option<&str>) -> Result<()> {
+/// Interactive SRP login: prompts for credentials and persists the session.
+/// `pub(crate)` so the REPL's `/login` can reuse the same flow in-session.
+pub(crate) async fn login_flow(captcha_token: Option<&str>) -> Result<()> {
     println!("{}", "Proton login".bold());
     println!("Credentials are used locally for the SRP handshake; the password is never sent.");
     print!("email/username: ");
